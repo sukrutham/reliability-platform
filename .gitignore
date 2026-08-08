@@ -1,0 +1,7 @@
+reliability-platform
+*.exe
+*.test
+*.out
+.DS_Store
+bin/
+dist/
