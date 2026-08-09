@@ -1,0 +1,7 @@
+.git
+.gitignore
+DEVELOPMENT.md
+README.md
+bin/
+dist/
+*.md

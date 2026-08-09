@@ -5,3 +5,5 @@ reliability-platform
 .DS_Store
 bin/
 dist/
+DEVELOPMENT.md
+CLAUDE.md
