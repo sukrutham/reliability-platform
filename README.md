@@ -28,7 +28,7 @@ rather than a one-off demo.
 
 - [x] Phase 1: Core REST API + unit tests
 - [x] Phase 2: Containerization (Docker)
-- [ ] Phase 3: CI pipeline (GitHub Actions)
+- [x] Phase 3: CI pipeline (GitHub Actions)
 - [ ] Phase 4: Kubernetes deployment
 - [ ] Phase 5: Observability (Prometheus + Grafana)
 - [ ] Phase 6: SLOs, alerting, runbooks
@@ -74,3 +74,14 @@ docker run -p 8080:8080 reliability-platform:local
 ```bash
 docker compose up --build
 ```
+
+## Phase 3: CI Pipeline
+
+GitHub Actions runs on every push/PR to `main`:
+
+1. **Lint** — `gofmt` and `go vet`
+2. **Test** — `go test ./... -race`
+3. **Build & push** — multi-stage Docker image published to GitHub Container
+   Registry (`ghcr.io`), tagged with `latest` and the commit SHA (main only)
+
+See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
