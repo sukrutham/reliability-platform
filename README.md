@@ -29,7 +29,7 @@ rather than a one-off demo.
 - [x] Phase 1: Core REST API + unit tests
 - [x] Phase 2: Containerization (Docker)
 - [x] Phase 3: CI pipeline (GitHub Actions)
-- [ ] Phase 4: Kubernetes deployment
+- [x] Phase 4: Kubernetes deployment
 - [ ] Phase 5: Observability (Prometheus + Grafana)
 - [ ] Phase 6: SLOs, alerting, runbooks
 - [ ] Phase 7: Chaos / resilience testing
@@ -85,3 +85,31 @@ GitHub Actions runs on every push/PR to `main`:
    Registry (`ghcr.io`), tagged with `latest` and the commit SHA (main only)
 
 See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+
+## Phase 4: Kubernetes Deployment
+
+Manifests in [`deploy/k8s`](deploy/k8s) run the app as a 2-replica
+Deployment with liveness/readiness probes wired to `/healthz` and
+`/readyz`, config via ConfigMap, and a ClusterIP Service.
+
+The API also handles `SIGTERM` for graceful shutdown — in-flight requests
+are drained before the process exits, so Kubernetes rollouts and pod
+evictions don't drop traffic. Pods run with a hardened `securityContext`:
+non-root UID, read-only root filesystem, no privilege escalation, all
+Linux capabilities dropped.
+
+### Run locally with kind
+
+```bash
+kind create cluster --name reliability-platform
+docker build -t ghcr.io/sukrutham/reliability-platform:latest .
+kind load docker-image ghcr.io/sukrutham/reliability-platform:latest --name reliability-platform
+
+kubectl apply -f deploy/k8s/namespace.yaml
+kubectl apply -f deploy/k8s/configmap.yaml
+kubectl apply -f deploy/k8s/deployment.yaml
+kubectl apply -f deploy/k8s/service.yaml
+
+kubectl -n reliability-platform rollout status deployment/reliability-platform
+kubectl -n reliability-platform port-forward svc/reliability-platform 8080:80
+```
