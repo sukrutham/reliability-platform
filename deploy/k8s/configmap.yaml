@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: reliability-platform-config
+  namespace: reliability-platform
+data:
+  PORT: "8080"
