@@ -10,7 +10,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sukrutham/reliability-platform/internal/handlers"
+	"github.com/sukrutham/reliability-platform/internal/metrics"
 	"github.com/sukrutham/reliability-platform/internal/store"
 )
 
@@ -24,6 +26,7 @@ func main() {
 	mux.HandleFunc("GET /api/v1/todos", todoHandler.List)
 	mux.HandleFunc("POST /api/v1/todos", todoHandler.Create)
 	mux.HandleFunc("GET /api/v1/todos/{id}", todoHandler.Get)
+	mux.Handle("GET /metrics", promhttp.Handler())
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -32,7 +35,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    ":" + port,
-		Handler: mux,
+		Handler: metrics.Middleware(mux),
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)

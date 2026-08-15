@@ -30,7 +30,7 @@ rather than a one-off demo.
 - [x] Phase 2: Containerization (Docker)
 - [x] Phase 3: CI pipeline (GitHub Actions)
 - [x] Phase 4: Kubernetes deployment
-- [ ] Phase 5: Observability (Prometheus + Grafana)
+- [x] Phase 5: Observability (Prometheus + Grafana)
 - [ ] Phase 6: SLOs, alerting, runbooks
 - [ ] Phase 7: Chaos / resilience testing
 - [ ] Phase 8: Infrastructure as Code
@@ -112,4 +112,34 @@ kubectl apply -f deploy/k8s/service.yaml
 
 kubectl -n reliability-platform rollout status deployment/reliability-platform
 kubectl -n reliability-platform port-forward svc/reliability-platform 8080:80
+```
+
+## Phase 5: Observability
+
+The app is instrumented with `prometheus/client_golang` middleware
+(`internal/metrics`) exposing request rate, latency histograms, and
+in-flight requests at `/metrics`, labeled by route/method/status.
+
+[`deploy/k8s/servicemonitor.yaml`](deploy/k8s/servicemonitor.yaml) wires
+Prometheus Operator to scrape the app, and
+[`deploy/k8s/grafana-dashboard.yaml`](deploy/k8s/grafana-dashboard.yaml)
+ships a dashboard (request rate, error rate, p50/p95/p99 latency,
+in-flight requests) as a labeled ConfigMap that Grafana's sidecar
+auto-loads.
+
+### Run locally with kind
+
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+  --namespace monitoring --create-namespace \
+  -f deploy/observability/kube-prometheus-stack-values.yaml --wait
+
+kubectl apply -f deploy/k8s/servicemonitor.yaml
+kubectl apply -f deploy/k8s/grafana-dashboard.yaml
+
+kubectl -n monitoring port-forward svc/kube-prometheus-stack-grafana 3000:80
+# http://localhost:3000, admin/admin
 ```
